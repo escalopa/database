@@ -1,0 +1,47 @@
+services:
+  nats-1:
+    image: nats:latest
+    container_name: nats-1
+    restart: on-failure
+    ports:
+      - "4222:4222"   # client port
+      - "8222:8222"   # monitoring
+      - "65432:65432" # profiler
+    command: >
+      -js
+      -m 8222
+      -name nats-1
+      -cluster nats://0.0.0.0:6222
+      -cluster_name nats-cluster
+      -routes nats://nats-2:6222,nats://nats-3:6222
+    volumes:
+      - ./_data/nats-1:/nats
+      - ./nats.conf:/etc/nats/nats.conf
+
+  nats-2:
+    image: nats:latest
+    container_name: nats-2
+    restart: on-failure
+    command: >
+      -js
+      -name nats-2
+      -cluster nats://0.0.0.0:6222
+      -cluster_name nats-cluster
+      -routes nats://nats-1:6222,nats://nats-3:6222
+    volumes:
+      - ./_data/nats-2:/nats
+      - ./nats.conf:/etc/nats/nats.conf
+
+  nats-3:
+    image: nats:latest
+    container_name: nats-3
+    restart: on-failure
+    command: >
+      -js
+      -name nats-3
+      -cluster nats://0.0.0.0:6222
+      -cluster_name nats-cluster
+      -routes nats://nats-1:6222,nats://nats-2:6222
+    volumes:
+      - ./_data/nats-3:/nats
+      - ./nats.conf:/etc/nats/nats.conf
